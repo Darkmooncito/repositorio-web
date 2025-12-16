@@ -9,6 +9,7 @@ Interfaz web para videoconferencias con chat en tiempo real, compartir pantalla 
 - 💬 **Chat integrado** - Mensajería en tiempo real con WebSocket
 - 🎤 **Control de micrófono** - Mutear/activar audio
 - 📹 **Control de cámara** - Activar/desactivar video
+- 📞 **Colgar llamada** - Terminar llamada con confirmación
 - 👥 **Múltiples participantes** - Soporta salas con varios usuarios
 - 📡 **Tiempo real** - Sincronización instantánea de mensajes y video
 
@@ -27,7 +28,7 @@ Este proyecto se conecta con dos servidores backend:
 - Socket.io Client
 - CSS3 (Grid & Flexbox)
 
-## 💻 Instalación
+## 💻 Instalación Local
 
 1. **Clonar el repositorio**
 ```bash
@@ -51,25 +52,51 @@ VITE_VIDEO_SERVER_URL=http://localhost:3001
 VITE_CHAT_SERVER_URL=http://localhost:3002
 ```
 
-4. **Instalar dependencias faltantes**
-```bash
-npm install socket.io-client react-router-dom
-```
-
-## 🏃 Ejecutar en desarrollo
-
+4. **Ejecutar en desarrollo**
 ```bash
 npm run dev
 ```
 
-La aplicación estará disponible en `http://localhost:5173`
+## 🌐 Desplegar en Vercel
 
-## 📦 Build para producción
+### Prerequisitos
+- Cuenta en [Vercel](https://vercel.com)
+- Servidores backend desplegados (Railway, Render, etc.)
+
+### Pasos:
+
+1. **Instalar Vercel CLI**
 ```bash
-npm run build
+npm i -g vercel
 ```
 
-Los archivos estarán en la carpeta `dist/`
+2. **Login en Vercel**
+```bash
+vercel login
+```
+
+3. **Configurar variables de entorno en Vercel**
+
+En el dashboard de Vercel:
+- Ve a tu proyecto → Settings → Environment Variables
+- Agrega:
+  - `VITE_VIDEO_SERVER_URL` = URL de tu servidor de video
+  - `VITE_CHAT_SERVER_URL` = URL de tu servidor de chat
+
+4. **Desplegar**
+```bash
+vercel --prod
+```
+
+O conecta tu repositorio de GitHub a Vercel para deploys automáticos.
+
+### Configuración CORS en Servidores
+
+No olvides actualizar los `.env` de tus servidores backend con la URL de Vercel:
+
+```env
+ORIGIN=https://tu-app.vercel.app,http://localhost:5173
+```
 
 ## 📝 Estructura del Proyecto
 
@@ -105,52 +132,9 @@ src/
 - 🎤 **Micrófono** - Click para mutear/activar
 - 📹 **Cámara** - Click para activar/desactivar video
 - 🖥️ **Pantalla** - Click para compartir/detener compartir pantalla
-- 📞 **Salir** - Click para abandonar la sala
+- 📞 **Colgar** - Click para terminar la llamada (con confirmación)
 - ←/→ **Chat** - Toggle para mostrar/ocultar chat
-
-## 🔌 API de los Servidores
-
-### Servidor de Video (WebRTC)
-
-Eventos emitidos:
-- `join-room` - Unirse a una sala
-- `offer` - Enviar oferta WebRTC
-- `answer` - Enviar respuesta WebRTC
-- `ice-candidate` - Enviar candidato ICE
-- `leave-room` - Salir de la sala
-
-Eventos recibidos:
-- `user-connected` - Nuevo usuario conectado
-- `offer` - Oferta WebRTC recibida
-- `answer` - Respuesta WebRTC recibida
-- `ice-candidate` - Candidato ICE recibido
-- `user-disconnected` - Usuario desconectado
-
-### Servidor de Chat (WebSocket)
-
-Eventos emitidos:
-- `join-room` - Unirse a sala de chat
-- `send-message` - Enviar mensaje
-- `leave-room` - Salir de sala de chat
-
-Eventos recibidos:
-- `message` - Nuevo mensaje
-- `message-history` - Historial de mensajes
-- `user-joined` - Usuario se unió
-- `user-left` - Usuario salió
-
-## 👥 Contribuir
-
-1. Fork el proyecto
-2. Crea una rama (`git checkout -b feature/nueva-funcionalidad`)
-3. Commit tus cambios (`git commit -am 'Agregar nueva funcionalidad'`)
-4. Push a la rama (`git push origin feature/nueva-funcionalidad`)
-5. Abre un Pull Request
 
 ## 📝 Licencia
 
 MIT
-
-## ❓ Soporte
-
-¿Problemas o preguntas? Abre un issue en GitHub.

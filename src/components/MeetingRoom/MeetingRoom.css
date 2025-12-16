@@ -58,3 +58,101 @@
 .meeting-room__toggle-chat:hover {
   background: #444;
 }
+
+/* Modal para confirmar salida */
+.leave-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.leave-modal {
+  background: #242424;
+  border-radius: 16px;
+  padding: 2rem;
+  max-width: 400px;
+  width: 90%;
+  text-align: center;
+  animation: slideUp 0.3s ease-out;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+.leave-modal__icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+}
+
+.leave-modal__title {
+  margin: 0 0 1rem 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.leave-modal__text {
+  margin: 0 0 2rem 0;
+  color: #aaa;
+  line-height: 1.5;
+}
+
+.leave-modal__buttons {
+  display: flex;
+  gap: 1rem;
+}
+
+.leave-modal__button {
+  flex: 1;
+  padding: 0.875rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.leave-modal__button--cancel {
+  background: #333;
+  color: white;
+}
+
+.leave-modal__button--cancel:hover {
+  background: #444;
+}
+
+.leave-modal__button--confirm {
+  background: #dc2626;
+  color: white;
+}
+
+.leave-modal__button--confirm:hover {
+  background: #b91c1c;
+  transform: scale(1.02);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

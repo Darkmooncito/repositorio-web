@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { VideoGrid } from '../VideoGrid/VideoGrid';
 import { ChatPanel } from '../ChatPanel/ChatPanel';
 import { MediaControls } from '../MediaControls/MediaControls';
@@ -16,6 +17,8 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({ roomId, username }) =>
   const [isMicMuted, setIsMicMuted] = useState(false);
   const [isCameraOff, setIsCameraOff] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(true);
+  const [showLeaveModal, setShowLeaveModal] = useState(false);
+  const navigate = useNavigate();
 
   const {
     localStream,
@@ -70,6 +73,19 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({ roomId, username }) =>
     sendMessage(message);
   };
 
+  const handleLeaveClick = () => {
+    setShowLeaveModal(true);
+  };
+
+  const handleConfirmLeave = () => {
+    leaveRoom();
+    navigate('/');
+  };
+
+  const handleCancelLeave = () => {
+    setShowLeaveModal(false);
+  };
+
   return (
     <div className="meeting-room">
       <div className="meeting-room__header">
@@ -95,7 +111,7 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({ roomId, username }) =>
             onToggleMic={handleToggleMic}
             onToggleCamera={handleToggleCamera}
             onToggleScreenShare={handleToggleScreenShare}
-            onLeaveRoom={leaveRoom}
+            onLeaveRoom={handleLeaveClick}
           />
         </div>
 
@@ -115,6 +131,32 @@ export const MeetingRoom: React.FC<MeetingRoomProps> = ({ roomId, username }) =>
       >
         {isChatOpen ? '→' : '←'}
       </button>
+
+      {showLeaveModal && (
+        <div className="leave-modal-overlay" onClick={handleCancelLeave}>
+          <div className="leave-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="leave-modal__icon">📞</div>
+            <h3 className="leave-modal__title">¿Terminar llamada?</h3>
+            <p className="leave-modal__text">
+              Estás a punto de salir de la sala. Esta acción no se puede deshacer.
+            </p>
+            <div className="leave-modal__buttons">
+              <button
+                className="leave-modal__button leave-modal__button--cancel"
+                onClick={handleCancelLeave}
+              >
+                Cancelar
+              </button>
+              <button
+                className="leave-modal__button leave-modal__button--confirm"
+                onClick={handleConfirmLeave}
+              >
+                Terminar llamada
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
