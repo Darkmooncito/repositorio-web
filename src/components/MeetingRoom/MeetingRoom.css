@@ -1,0 +1,60 @@
+.meeting-room {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: #1a1a1a;
+  color: white;
+  position: relative;
+}
+
+.meeting-room__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  background: #242424;
+  border-bottom: 1px solid #333;
+}
+
+.meeting-room__header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 500;
+}
+
+.meeting-room__username {
+  font-size: 0.9rem;
+  color: #aaa;
+}
+
+.meeting-room__content {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.meeting-room__video-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.meeting-room__toggle-chat {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #333;
+  border: none;
+  color: white;
+  padding: 2rem 0.5rem;
+  cursor: pointer;
+  border-radius: 8px 0 0 8px;
+  z-index: 10;
+  transition: background 0.2s;
+}
+
+.meeting-room__toggle-chat:hover {
+  background: #444;
+}

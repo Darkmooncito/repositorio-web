@@ -1,0 +1,57 @@
+.media-controls {
+  padding: 1.5rem;
+  background: #242424;
+  border-top: 1px solid #333;
+  display: flex;
+  justify-content: center;
+}
+
+.media-controls__buttons {
+  display: flex;
+  gap: 1rem;
+}
+
+.media-controls__button {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: none;
+  background: #333;
+  color: white;
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.media-controls__button:hover {
+  background: #444;
+  transform: scale(1.05);
+}
+
+.media-controls__button--active {
+  background: #dc2626;
+}
+
+.media-controls__button--active:hover {
+  background: #b91c1c;
+}
+
+.media-controls__button--sharing {
+  background: #16a34a;
+}
+
+.media-controls__button--sharing:hover {
+  background: #15803d;
+}
+
+.media-controls__button--leave {
+  background: #dc2626;
+}
+
+.media-controls__button--leave:hover {
+  background: #b91c1c;
+  transform: scale(1.1);
+}
