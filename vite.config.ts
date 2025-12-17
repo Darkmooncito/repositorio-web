@@ -1,22 +1,18 @@
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
-import tailwindcss from "@tailwindcss/vite";
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
-  define: {
-    global: "globalThis",
-    "process.env": "{}",
-  },
-  resolve: {
-    alias: {
-      events: "events",
-      util: "util",
-      process: "process/browser",
-    },
-  },
-  optimizeDeps: {
-    include: ["events", "util", "process"],
-  },
-});
+  plugins: [react()],
+  server: {
+    host: true,
+    port: 5173,
+    strictPort: false,
+    allowedHosts: [
+      '.loca.lt',
+      '.ngrok-free.app',
+      '.ngrok.io',
+      'localhost'
+    ]
+  }
+})
