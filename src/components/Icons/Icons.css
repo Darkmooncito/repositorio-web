@@ -1,0 +1,11 @@
+/* Icon styles - can be used for hover effects */
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s;
+}
+
+.icon-button:hover {
+  transform: scale(1.1);
+}

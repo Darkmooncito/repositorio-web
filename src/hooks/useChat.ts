@@ -1,6 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
 
+/**
+ * Message interface for chat messages
+ */
 interface Message {
   id: string;
   username: string;
@@ -10,13 +13,22 @@ interface Message {
 
 const CHAT_SERVER_URL = import.meta.env.VITE_CHAT_SERVER_URL || 'http://localhost:3002';
 
+/**
+ * Custom hook for managing real-time chat functionality
+ * 
+ * @param {string} roomId - Unique identifier for the chat room
+ * @param {string} username - Display name of the current user
+ * @returns {Object} Chat state and control functions
+ * 
+ * @example
+ * const { messages, sendMessage, isConnected } = useChat('room123', 'John');
+ */
 export const useChat = (roomId: string, username: string) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isConnected, setIsConnected] = useState(false);
   const socketRef = useRef<Socket | null>(null);
 
   useEffect(() => {
-    // Conectar al servidor de chat
     socketRef.current = io(CHAT_SERVER_URL);
 
     socketRef.current.on('connect', () => {
@@ -30,7 +42,6 @@ export const useChat = (roomId: string, username: string) => {
       setIsConnected(false);
     });
 
-    // Recibir mensajes
     socketRef.current.on('message', (data: { id: string; username: string; text: string; timestamp: string }) => {
       const message: Message = {
         id: data.id,
@@ -41,7 +52,6 @@ export const useChat = (roomId: string, username: string) => {
       setMessages(prev => [...prev, message]);
     });
 
-    // Recibir historial de mensajes
     socketRef.current.on('message-history', (history: Array<{ id: string; username: string; text: string; timestamp: string }>) => {
       const messagesHistory = history.map(msg => ({
         id: msg.id,
@@ -52,25 +62,23 @@ export const useChat = (roomId: string, username: string) => {
       setMessages(messagesHistory);
     });
 
-    // Usuario se unió
     socketRef.current.on('user-joined', ({ username: joinedUser }) => {
       if (joinedUser !== username) {
         const systemMessage: Message = {
           id: `system-${Date.now()}`,
-          username: 'Sistema',
-          text: `${joinedUser} se ha unido a la sala`,
+          username: 'System',
+          text: `${joinedUser} joined the room`,
           timestamp: new Date()
         };
         setMessages(prev => [...prev, systemMessage]);
       }
     });
 
-    // Usuario se fue
     socketRef.current.on('user-left', ({ username: leftUser }) => {
       const systemMessage: Message = {
         id: `system-${Date.now()}`,
-        username: 'Sistema',
-        text: `${leftUser} ha salido de la sala`,
+        username: 'System',
+        text: `${leftUser} left the room`,
         timestamp: new Date()
       };
       setMessages(prev => [...prev, systemMessage]);
@@ -84,6 +92,11 @@ export const useChat = (roomId: string, username: string) => {
     };
   }, [roomId, username]);
 
+  /**
+   * Sends a text message to the chat room
+   * 
+   * @param {string} text - Message content to send
+   */
   const sendMessage = useCallback((text: string) => {
     if (socketRef.current && isConnected) {
       socketRef.current.emit('send-message', {

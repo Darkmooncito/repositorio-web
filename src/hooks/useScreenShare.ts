@@ -1,10 +1,24 @@
 import { useState, useRef, useCallback } from 'react';
 
+/**
+ * Custom hook for managing screen sharing functionality
+ * 
+ * @returns {Object} Screen sharing state and control functions
+ * 
+ * @example
+ * const { isSharing, screenStream, startScreenShare, stopScreenShare } = useScreenShare();
+ */
 export const useScreenShare = () => {
   const [isSharing, setIsSharing] = useState(false);
   const [screenStream, setScreenStream] = useState<MediaStream | null>(null);
   const screenStreamRef = useRef<MediaStream | null>(null);
 
+  /**
+   * Starts screen sharing by requesting display media
+   * Automatically stops when user ends sharing from browser controls
+   * 
+   * @returns {Promise<MediaStream | null>} The screen sharing stream or null if failed
+   */
   const startScreenShare = useCallback(async () => {
     try {
       const stream = await navigator.mediaDevices.getDisplayMedia({
@@ -22,7 +36,6 @@ export const useScreenShare = () => {
       setScreenStream(stream);
       setIsSharing(true);
 
-      // Detectar cuando el usuario detenga el compartir desde el navegador
       stream.getVideoTracks()[0].onended = () => {
         stopScreenShare();
       };
@@ -33,17 +46,20 @@ export const useScreenShare = () => {
       console.error('Error starting screen share:', error);
       if (error instanceof Error) {
         if (error.name === 'NotAllowedError') {
-          alert('Permiso denegado para compartir pantalla');
+          alert('Permission denied for screen sharing');
         } else if (error.name === 'NotFoundError') {
-          alert('No se encontró ninguna pantalla para compartir');
+          alert('No screen found to share');
         } else {
-          alert('Error al compartir pantalla: ' + error.message);
+          alert('Error sharing screen: ' + error.message);
         }
       }
       return null;
     }
   }, []);
 
+  /**
+   * Stops screen sharing and cleans up the stream
+   */
   const stopScreenShare = useCallback(() => {
     if (screenStreamRef.current) {
       screenStreamRef.current.getTracks().forEach(track => {
