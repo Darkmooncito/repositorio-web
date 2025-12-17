@@ -53,13 +53,14 @@
   border-radius: 8px 0 0 8px;
   z-index: 10;
   transition: background 0.2s;
+  font-size: 1.2rem;
 }
 
 .meeting-room__toggle-chat:hover {
   background: #444;
 }
 
-/* Modal para confirmar salida */
+/* Leave call confirmation modal */
 .leave-modal-overlay {
   position: fixed;
   top: 0;
@@ -86,8 +87,19 @@
 }
 
 .leave-modal__icon {
-  font-size: 4rem;
-  margin-bottom: 1rem;
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 1.5rem;
+  background: #dc2626;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.leave-modal__icon svg {
+  width: 32px;
+  height: 32px;
 }
 
 .leave-modal__title {

@@ -1,6 +1,23 @@
+/**
+ * ChatPanel component
+ * Real-time chat interface with message history and input
+ * 
+ * @component
+ * @example
+ * <ChatPanel
+ *   messages={messages}
+ *   onSendMessage={(msg) => console.log(msg)}
+ *   isConnected={true}
+ *   currentUser="John"
+ * />
+ */
 import React, { useState, useRef, useEffect } from 'react';
+import { SendIcon } from '../Icons/Icons';
 import './ChatPanel.css';
 
+/**
+ * Message interface
+ */
 interface Message {
   id: string;
   username: string;
@@ -9,9 +26,13 @@ interface Message {
 }
 
 interface ChatPanelProps {
+  /** Array of chat messages */
   messages: Message[];
+  /** Callback when sending a message */
   onSendMessage: (message: string) => void;
+  /** Connection status to chat server */
   isConnected: boolean;
+  /** Current user's username */
   currentUser: string;
 }
 
@@ -24,6 +45,9 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
   const [inputMessage, setInputMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  /**
+   * Scrolls to the bottom of the message list
+   */
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -32,6 +56,9 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
     scrollToBottom();
   }, [messages]);
 
+  /**
+   * Handles form submission for sending messages
+   */
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (inputMessage.trim() && isConnected) {
@@ -40,8 +67,11 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
     }
   };
 
+  /**
+   * Formats timestamp to display time
+   */
   const formatTime = (date: Date) => {
-    return new Date(date).toLocaleTimeString('es-ES', {
+    return new Date(date).toLocaleTimeString('en-US', {
       hour: '2-digit',
       minute: '2-digit'
     });
@@ -52,15 +82,16 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
       <div className="chat-panel__header">
         <h3>Chat</h3>
         <span className={`chat-panel__status ${isConnected ? 'chat-panel__status--connected' : ''}`}>
-          {isConnected ? '● Conectado' : '○ Desconectado'}
+          <span className="chat-panel__status-dot"></span>
+          {isConnected ? 'Connected' : 'Disconnected'}
         </span>
       </div>
 
       <div className="chat-panel__messages">
         {messages.length === 0 ? (
           <div className="chat-panel__empty">
-            <p>No hay mensajes aún</p>
-            <p className="chat-panel__empty-hint">Inicia la conversación 👋</p>
+            <p>No messages yet</p>
+            <p className="chat-panel__empty-hint">Start the conversation</p>
           </div>
         ) : (
           messages.map((message) => (
@@ -85,17 +116,19 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
         <input
           type="text"
           className="chat-panel__input"
-          placeholder="Escribe un mensaje..."
+          placeholder="Type a message..."
           value={inputMessage}
           onChange={(e) => setInputMessage(e.target.value)}
           disabled={!isConnected}
+          aria-label="Message input"
         />
         <button
           type="submit"
           className="chat-panel__send-button"
           disabled={!isConnected || !inputMessage.trim()}
+          aria-label="Send message"
         >
-          ➤
+          <SendIcon size={20} />
         </button>
       </form>
     </div>
