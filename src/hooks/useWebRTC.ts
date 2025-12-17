@@ -1,18 +1,12 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { io, Socket } from 'socket.io-client';
 
-/**
- * Peer information interface
- */
 interface Peer {
   id: string;
   username: string;
   stream?: MediaStream;
 }
 
-/**
- * WebRTC ICE servers configuration
- */
 const VIDEO_SERVER_URL = import.meta.env.VITE_VIDEO_SERVER_URL || 'http://localhost:3001';
 
 const ICE_SERVERS = {
@@ -22,16 +16,6 @@ const ICE_SERVERS = {
   ]
 };
 
-/**
- * Custom hook for managing WebRTC connections and peer-to-peer communication
- * 
- * @param {string} roomId - Unique identifier for the room
- * @param {string} username - Display name of the current user
- * @returns {Object} WebRTC connection state and control functions
- * 
- * @example
- * const { localStream, remoteStreams, peers, connectToRoom, toggleAudio } = useWebRTC('room123', 'John');
- */
 export const useWebRTC = (roomId: string, username: string) => {
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [remoteStreams, setRemoteStreams] = useState<Map<string, MediaStream>>(new Map());
@@ -40,22 +24,25 @@ export const useWebRTC = (roomId: string, username: string) => {
   const socketRef = useRef<Socket | null>(null);
   const peersRef = useRef<Map<string, RTCPeerConnection>>(new Map());
   const localStreamRef = useRef<MediaStream | null>(null);
+  const isConnectingRef = useRef(false);
+  const hasJoinedRef = useRef(false);
 
-  /**
-   * Creates a new RTCPeerConnection for a specific peer
-   * 
-   * @param {string} peerId - Unique identifier of the peer
-   * @returns {RTCPeerConnection} Configured peer connection instance
-   */
   const createPeerConnection = useCallback((peerId: string): RTCPeerConnection => {
+    // Si ya existe, retornar la conexión existente
+    if (peersRef.current.has(peerId)) {
+      return peersRef.current.get(peerId)!;
+    }
+
     const peerConnection = new RTCPeerConnection(ICE_SERVERS);
 
+    // Agregar tracks locales al peer
     if (localStreamRef.current) {
       localStreamRef.current.getTracks().forEach(track => {
         peerConnection.addTrack(track, localStreamRef.current!);
       });
     }
 
+    // Manejar tracks remotos
     peerConnection.ontrack = (event) => {
       console.log('Received remote track from:', peerId);
       const [remoteStream] = event.streams;
@@ -66,6 +53,7 @@ export const useWebRTC = (roomId: string, username: string) => {
       });
     };
 
+    // Manejar candidatos ICE
     peerConnection.onicecandidate = (event) => {
       if (event.candidate && socketRef.current) {
         socketRef.current.emit('ice-candidate', {
@@ -75,6 +63,7 @@ export const useWebRTC = (roomId: string, username: string) => {
       }
     };
 
+    // Manejar cambios de conexión
     peerConnection.onconnectionstatechange = () => {
       console.log(`Peer ${peerId} connection state:`, peerConnection.connectionState);
       if (peerConnection.connectionState === 'disconnected' || 
@@ -87,11 +76,6 @@ export const useWebRTC = (roomId: string, username: string) => {
     return peerConnection;
   }, []);
 
-  /**
-   * Handles peer disconnection by cleaning up resources
-   * 
-   * @param {string} peerId - ID of the disconnected peer
-   */
   const handlePeerDisconnection = (peerId: string) => {
     const peerConnection = peersRef.current.get(peerId);
     if (peerConnection) {
@@ -108,12 +92,17 @@ export const useWebRTC = (roomId: string, username: string) => {
     setPeers(prev => prev.filter(p => p.id !== peerId));
   };
 
-  /**
-   * Connects to a video room and establishes WebRTC connections
-   * Requests user media permissions and sets up socket event listeners
-   */
   const connectToRoom = useCallback(async () => {
+    // Prevenir múltiples conexiones
+    if (isConnectingRef.current || hasJoinedRef.current) {
+      console.log('Already connecting or connected, skipping...');
+      return;
+    }
+
+    isConnectingRef.current = true;
+
     try {
+      // Obtener stream local
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           width: { ideal: 1280 },
@@ -129,17 +118,37 @@ export const useWebRTC = (roomId: string, username: string) => {
       setLocalStream(stream);
       localStreamRef.current = stream;
 
+      // Conectar al servidor de video
       socketRef.current = io(VIDEO_SERVER_URL);
 
       socketRef.current.on('connect', () => {
         console.log('Connected to video server');
-        socketRef.current!.emit('join-room', { roomId, username });
+        if (!hasJoinedRef.current) {
+          socketRef.current!.emit('join-room', { roomId, username });
+          hasJoinedRef.current = true;
+        }
       });
 
+      // Usuario existente en la sala
       socketRef.current.on('user-connected', async ({ userId, username: peerUsername }) => {
-        console.log('User connected:', peerUsername);
-        setPeers(prev => [...prev, { id: userId, username: peerUsername }]);
+        console.log('User connected:', peerUsername, userId);
+        
+        // Prevenir conexión consigo mismo
+        if (userId === socketRef.current?.id) {
+          console.log('Ignoring self connection');
+          return;
+        }
 
+        // Verificar si ya existe el peer
+        setPeers(prev => {
+          if (prev.find(p => p.id === userId)) {
+            console.log('Peer already exists:', userId);
+            return prev;
+          }
+          return [...prev, { id: userId, username: peerUsername }];
+        });
+
+        // Crear oferta para el nuevo usuario
         const peerConnection = createPeerConnection(userId);
         const offer = await peerConnection.createOffer();
         await peerConnection.setLocalDescription(offer);
@@ -150,13 +159,21 @@ export const useWebRTC = (roomId: string, username: string) => {
         });
       });
 
+      // Recibir oferta
       socketRef.current.on('offer', async ({ offer, from, username: peerUsername }) => {
-        console.log('Received offer from:', peerUsername);
+        console.log('Received offer from:', peerUsername, from);
+        
+        // Prevenir oferta de sí mismo
+        if (from === socketRef.current?.id) {
+          console.log('Ignoring offer from self');
+          return;
+        }
+
         setPeers(prev => {
-          if (!prev.find(p => p.id === from)) {
-            return [...prev, { id: from, username: peerUsername }];
+          if (prev.find(p => p.id === from)) {
+            return prev;
           }
-          return prev;
+          return [...prev, { id: from, username: peerUsername }];
         });
 
         const peerConnection = createPeerConnection(from);
@@ -170,6 +187,7 @@ export const useWebRTC = (roomId: string, username: string) => {
         });
       });
 
+      // Recibir respuesta
       socketRef.current.on('answer', async ({ answer, from }) => {
         console.log('Received answer from:', from);
         const peerConnection = peersRef.current.get(from);
@@ -178,6 +196,7 @@ export const useWebRTC = (roomId: string, username: string) => {
         }
       });
 
+      // Recibir candidatos ICE
       socketRef.current.on('ice-candidate', async ({ candidate, from }) => {
         const peerConnection = peersRef.current.get(from);
         if (peerConnection) {
@@ -185,6 +204,7 @@ export const useWebRTC = (roomId: string, username: string) => {
         }
       });
 
+      // Usuario desconectado
       socketRef.current.on('user-disconnected', ({ userId }) => {
         console.log('User disconnected:', userId);
         handlePeerDisconnection(userId);
@@ -192,13 +212,12 @@ export const useWebRTC = (roomId: string, username: string) => {
 
     } catch (error) {
       console.error('Error connecting to room:', error);
-      alert('Could not access camera or microphone. Please check permissions.');
+      alert('No se pudo acceder a la cámara o micrófono. Verifica los permisos.');
+    } finally {
+      isConnectingRef.current = false;
     }
   }, [roomId, username, createPeerConnection]);
 
-  /**
-   * Toggles the audio track on/off
-   */
   const toggleAudio = useCallback(() => {
     if (localStreamRef.current) {
       const audioTrack = localStreamRef.current.getAudioTracks()[0];
@@ -208,9 +227,6 @@ export const useWebRTC = (roomId: string, username: string) => {
     }
   }, []);
 
-  /**
-   * Toggles the video track on/off
-   */
   const toggleVideo = useCallback(() => {
     if (localStreamRef.current) {
       const videoTrack = localStreamRef.current.getVideoTracks()[0];
@@ -220,23 +236,27 @@ export const useWebRTC = (roomId: string, username: string) => {
     }
   }, []);
 
-  /**
-   * Leaves the room and cleans up all connections
-   */
   const leaveRoom = useCallback(() => {
+    // Cerrar todas las conexiones peer
     peersRef.current.forEach(peerConnection => {
       peerConnection.close();
     });
     peersRef.current.clear();
 
+    // Detener stream local
     if (localStreamRef.current) {
       localStreamRef.current.getTracks().forEach(track => track.stop());
     }
 
+    // Desconectar socket
     if (socketRef.current) {
       socketRef.current.emit('leave-room');
       socketRef.current.disconnect();
     }
+
+    // Resetear refs
+    hasJoinedRef.current = false;
+    isConnectingRef.current = false;
 
     setLocalStream(null);
     setRemoteStreams(new Map());
